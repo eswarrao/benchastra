@@ -40,7 +40,9 @@ export const ENDPOINTS = {
 // Token management functions
 export const isTokenExpired = (token: string): boolean => {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    // JWT uses base64url encoding — convert to standard base64 before atob()
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
     const exp = payload.exp;
     if (exp) {
       const now = Math.floor(Date.now() / 1000);
@@ -48,7 +50,7 @@ export const isTokenExpired = (token: string): boolean => {
     }
     return false;
   } catch (e) {
-    return true;
+    return false; // If we can't parse the token, assume it's valid — let the server decide
   }
 };
 
@@ -112,8 +114,10 @@ export async function apiRequest(
   const maxRetries = 1;
   
   let token = getToken();
-  
-  if (token && isTokenExpired(token)) {
+
+  const isAuthEndpoint = endpoint.startsWith('/auth/');
+
+  if (!isAuthEndpoint && token && isTokenExpired(token)) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       token = newToken;

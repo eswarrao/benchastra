@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import { Bell, Shield, CreditCard, User, Building2, Save, Loader2 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 
@@ -46,7 +48,7 @@ export function Settings() {
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) return false;
       
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refreshToken })
@@ -119,7 +121,7 @@ export function Settings() {
     const fetchUser = async () => {
       try {
         setFetching(true);
-        const response = await fetchWithAuth('/api/users/me');
+        const response = await fetchWithAuth(`${API_BASE_URL}/users/me`);
 
         if (response.ok) {
           const data = await response.json();
@@ -187,7 +189,7 @@ export function Settings() {
         }
       };
 
-      const response = await fetchWithAuth('/api/users/me', {
+      const response = await fetchWithAuth(`${API_BASE_URL}/users/me`, {
         method: 'PUT',
         body: JSON.stringify(updateData),
       });

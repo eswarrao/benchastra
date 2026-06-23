@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import { Users, Briefcase, FileCheck, DollarSign, TrendingUp } from 'lucide-react';
 
 interface VendorDashboardProps {
@@ -25,7 +27,7 @@ export function VendorDashboard({ onNavigate }: VendorDashboardProps) {
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) return false;
       
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refreshToken })
@@ -99,7 +101,7 @@ export function VendorDashboard({ onNavigate }: VendorDashboardProps) {
       if (!token) return;
       
       try {
-        const response = await fetchWithAuth('/api/dashboard/vendor/stats');
+        const response = await fetchWithAuth(`${API_BASE_URL}/dashboard/vendor/stats`);
         if (response.ok) {
           const data = await response.json();
           setStats(data);
@@ -114,7 +116,7 @@ export function VendorDashboard({ onNavigate }: VendorDashboardProps) {
       if (!token) return;
       
       try {
-        const response = await fetchWithAuth('/api/analytics/vendor/availability-trend');
+        const response = await fetchWithAuth(`${API_BASE_URL}/analytics/vendor/availability-trend`);
         if (response.ok) {
           const trends = await response.json();
           setTrendData(trends[trendFilter] || []);
@@ -134,7 +136,7 @@ export function VendorDashboard({ onNavigate }: VendorDashboardProps) {
       if (!token) return;
       
       try {
-        const response = await fetchWithAuth('/api/users/me');
+        const response = await fetchWithAuth(`${API_BASE_URL}/users/me`);
         if (response.ok) {
           const userData = await response.json();
           setVendorName(userData.vendor_name || userData.full_name || userData.email?.split('@')[0] || 'Vendor');

@@ -4,6 +4,9 @@ import { RequirementDetailModal } from './RequirementDetailModal';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { Pagination } from './Pagination';
 import { useToast } from '../contexts/ToastContext';
+import { apiRequest } from '@/config/api';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 interface RequirementsProps {
   onViewMatches?: (jobId: string, matchCount: number) => void;
@@ -52,7 +55,7 @@ const refreshToken = async (): Promise<boolean> => {
     const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) return false;
     
-    const response = await fetch('/api/auth/refresh', {
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken })
@@ -150,7 +153,7 @@ export function Requirements({ onViewMatches, onCreateNew }: RequirementsProps) 
       const params = new URLSearchParams({ limit: '100' });
       if (statusFilter !== 'all') params.set('status', statusFilter);
 
-      const response = await fetchWithAuth(`/api/requirements/?${params.toString()}`);
+      const response = await fetchWithAuth(`${API_BASE_URL}/requirements/?${params.toString()}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -177,7 +180,7 @@ export function Requirements({ onViewMatches, onCreateNew }: RequirementsProps) 
   const handleViewMatches = async (requirement: ApiRequirement) => {
     try {
       // Use the numeric ID (database ID) for the matches endpoint
-      const endpoint = `/api/requirements/${requirement.id}/matches`;
+      const endpoint = `${API_BASE_URL}/requirements/${requirement.id}/matches`;
       
       const response = await fetchWithAuth(endpoint);
       
@@ -202,7 +205,7 @@ export function Requirements({ onViewMatches, onCreateNew }: RequirementsProps) 
 
   const confirmDelete = async () => {
     try {
-      await fetchWithAuth(`/api/requirements/${deleteConfirmation.id}`, {
+      await fetchWithAuth(`${API_BASE_URL}/requirements/${deleteConfirmation.id}`, {
         method: 'DELETE',
       });
       setDeleteConfirmation({ show: false, id: 0, label: '' });
@@ -219,7 +222,7 @@ export function Requirements({ onViewMatches, onCreateNew }: RequirementsProps) 
     try {
       const ids = Array.from(selectedIds);
       const promises = ids.map(id => 
-        fetchWithAuth(`/api/requirements/${id}`, {
+        fetchWithAuth(`${API_BASE_URL}/requirements/${id}`, {
           method: 'DELETE',
         })
       );
@@ -315,7 +318,7 @@ export function Requirements({ onViewMatches, onCreateNew }: RequirementsProps) 
     formData.append('file', file);
 
     try {
-      let response = await fetch('/api/requirements/bulk-upload', {
+      let response = await fetch(`${API_BASE_URL}/requirements/bulk-upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -327,7 +330,7 @@ export function Requirements({ onViewMatches, onCreateNew }: RequirementsProps) 
         const refreshed = await refreshToken();
         if (refreshed) {
           const newToken = localStorage.getItem('token') || localStorage.getItem('access_token');
-          response = await fetch('/api/requirements/bulk-upload', {
+          response = await fetch(`${API_BASE_URL}/requirements/bulk-upload`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${newToken}`,

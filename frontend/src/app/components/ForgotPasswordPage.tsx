@@ -1,4 +1,6 @@
 import { useState } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import React from 'react';
 import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
@@ -15,7 +17,7 @@ export function ForgotPasswordPage({ onBackToLogin, onSendCode }: ForgotPassword
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/auth/send-otp', {
+      const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })

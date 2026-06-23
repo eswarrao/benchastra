@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import { Search, Download, Plus, Eye, Edit2, Trash2, X, Upload, Loader2, CheckSquare, Square, Trash, FileSpreadsheet } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import * as XLSX from 'xlsx';
@@ -19,6 +21,7 @@ interface Resource {
   summary: string;
   skills: string[];
   status: 'Available' | 'Busy' | 'On Leave';
+  resume_url?: string;
 }
 
 interface FormErrors {
@@ -63,6 +66,9 @@ export function VendorResources() {
   const [summary, setSummary] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState('');
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeDataUrl, setResumeDataUrl] = useState<string>('');
+  const [resumeLoading, setResumeLoading] = useState(false);
 
   const getToken = () => localStorage.getItem('token') || localStorage.getItem('access_token');
 
@@ -72,7 +78,7 @@ export function VendorResources() {
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) return false;
       
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refreshToken })
@@ -143,7 +149,7 @@ export function VendorResources() {
   // Fetch resources
   const fetchResources = async () => {
     try {
-      const response = await fetchWithAuth('/api/resources/');
+      const response = await fetchWithAuth(`${API_BASE_URL}/resources/`);
       if (response.ok) {
         const data = await response.json();
         const mappedResources = data.map((resource: any) => ({
@@ -161,7 +167,8 @@ export function VendorResources() {
           phone: resource.phone || '',
           summary: resource.summary || '',
           skills: resource.skills || [],
-          status: resource.status || 'Available'
+          status: resource.status || 'Available',
+          resume_url: resource.resume_url || ''
         }));
         setResources(mappedResources);
         setSelectedIds(new Set());
@@ -266,7 +273,7 @@ export function VendorResources() {
     if (!validateForm()) return;
 
     try {
-      const response = await fetchWithAuth('/api/resources/', {
+      const response = await fetchWithAuth(`${API_BASE_URL}/resources/`, {
         method: 'POST',
         body: JSON.stringify({
           name: resourceName,
@@ -280,6 +287,7 @@ export function VendorResources() {
           phone: phone,
           summary: summary,
           skills: selectedSkills,
+          resume_url: resumeDataUrl || null,
           status: 'Available'
         }),
       });
@@ -319,9 +327,10 @@ export function VendorResources() {
         phone: phone || '',
         summary: summary || '',
         skills: selectedSkills,
+        resume_url: resumeDataUrl || editingResource.resume_url || null,
       };
 
-      const response = await fetchWithAuth(`/api/resources/${editingResource.id}`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/resources/${editingResource.id}`, {
         method: 'PUT',
         body: JSON.stringify(updateData),
       });
@@ -347,7 +356,7 @@ export function VendorResources() {
     if (!selectedResource) return;
 
     try {
-      const response = await fetchWithAuth(`/api/resources/${selectedResource.id}`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/resources/${selectedResource.id}`, {
         method: 'DELETE',
       });
 
@@ -370,7 +379,7 @@ export function VendorResources() {
     try {
       const ids = Array.from(selectedIds);
       const promises = ids.map(id =>
-        fetchWithAuth(`/api/resources/${id}`, {
+        fetchWithAuth(`${API_BASE_URL}/resources/${id}`, {
           method: 'DELETE',
         })
       );
@@ -433,6 +442,25 @@ export function VendorResources() {
     }
   };
 
+  const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      showError('File too large. Maximum 5MB allowed.');
+      return;
+    }
+    setResumeFile(file);
+    setResumeLoading(true);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string;
+      // Append filename to data URL so we can recover it later
+      setResumeDataUrl(result + `;;filename=${file.name}`);
+      setResumeLoading(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const resetForm = () => {
     setResourceName('');
     setSkillDomain('');
@@ -445,6 +473,8 @@ export function VendorResources() {
     setSummary('');
     setSelectedSkills([]);
     setSkillInput('');
+    setResumeFile(null);
+    setResumeDataUrl('');
     setErrors({});
   };
 
@@ -468,6 +498,8 @@ export function VendorResources() {
     setSummary(resource.summary);
     setSelectedSkills(resource.skills || []);
     setSkillInput('');
+    setResumeFile(null);
+    setResumeDataUrl((resource as any).resume_url || '');
     setErrors({});
     setShowEditModal(true);
   };
@@ -925,9 +957,26 @@ export function VendorResources() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Resume <span className="text-slate-400 font-normal text-xs">(PDF or DOC, max 5MB)</span></label>
+                <label className="flex items-center gap-3 w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-500 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all group">
+                  <Upload size={18} className="text-slate-400 group-hover:text-green-600 flex-shrink-0" />
+                  <span className="text-sm text-slate-500 dark:text-slate-300 truncate">
+                    {resumeLoading ? 'Reading file...' : resumeFile ? resumeFile.name : 'Click to upload resume'}
+                  </span>
+                  <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleResumeChange} />
+                </label>
+                {resumeFile && !resumeLoading && (
+                  <div className="flex items-center justify-between mt-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <span className="text-xs text-green-700 dark:text-green-400 truncate">{resumeFile.name}</span>
+                    <button onClick={() => { setResumeFile(null); setResumeDataUrl(''); }} className="text-red-500 hover:text-red-700 ml-2 flex-shrink-0"><X size={14} /></button>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-4">
                 <button onClick={() => setShowAddModal(false)} className="flex-1 px-6 py-3 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
-                <button onClick={handleAddResource} className="flex-1 cursor-pointer px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl shadow-lg shadow-green-600/30 hover:from-green-700 hover:to-green-800 transition-colors">Add Resource</button>
+                <button onClick={handleAddResource} disabled={resumeLoading} className="flex-1 cursor-pointer px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl shadow-lg shadow-green-600/30 hover:from-green-700 hover:to-green-800 transition-colors disabled:opacity-60">Add Resource</button>
               </div>
             </div>
           </div>
@@ -954,6 +1003,18 @@ export function VendorResources() {
               <div><div className="text-xs text-slate-500 mb-2">Skills</div><div className="flex flex-wrap gap-2">{selectedResource.skills?.map((skill, i) => (<span key={i} className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">{skill}</span>))}</div></div>
               <div><div className="text-xs text-slate-500 mb-2">Summary</div><p className="text-sm text-slate-600">{selectedResource.summary || 'No summary provided'}</p></div>
               <div><div className="text-xs text-slate-500 mb-1">Status</div><div className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${selectedResource.status === 'Available' ? 'bg-green-100 text-green-700' : selectedResource.status === 'Busy' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>{selectedResource.status}</div></div>
+              {selectedResource.resume_url && (
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">Resume</div>
+                  <a
+                    href={selectedResource.resume_url.split(';;')[0]}
+                    download={selectedResource.resume_url.split(';;filename=')[1] || 'resume'}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Download size={14} /> Download Resume
+                  </a>
+                </div>
+              )}
               <button onClick={() => setShowDetailsModal(false)} className="w-full cursor-pointer px-6 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">Close</button>
             </div>
           </div>
@@ -1124,9 +1185,36 @@ export function VendorResources() {
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Resume <span className="text-slate-400 font-normal text-xs">(PDF or DOC, max 5MB)</span></label>
+                {resumeDataUrl && !resumeFile && (
+                  <div className="flex items-center justify-between mb-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
+                    <span className="text-xs text-blue-700 dark:text-blue-400">Current resume uploaded</span>
+                    <div className="flex items-center gap-2">
+                      <a href={resumeDataUrl.split(';;')[0]} download={resumeDataUrl.split(';;filename=')[1] || 'resume'} className="text-xs text-blue-600 hover:underline">Download</a>
+                      <button onClick={() => setResumeDataUrl('')} className="text-red-500 hover:text-red-700"><X size={14} /></button>
+                    </div>
+                  </div>
+                )}
+                <label className="flex items-center gap-3 w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-500 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all group">
+                  <Upload size={18} className="text-slate-400 group-hover:text-green-600 flex-shrink-0" />
+                  <span className="text-sm text-slate-500 dark:text-slate-300 truncate">
+                    {resumeLoading ? 'Reading file...' : resumeFile ? resumeFile.name : 'Click to replace resume'}
+                  </span>
+                  <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleResumeChange} />
+                </label>
+                {resumeFile && !resumeLoading && (
+                  <div className="flex items-center justify-between mt-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <span className="text-xs text-green-700 dark:text-green-400 truncate">{resumeFile.name}</span>
+                    <button onClick={() => { setResumeFile(null); setResumeDataUrl(editingResource?.resume_url || ''); }} className="text-red-500 hover:text-red-700 ml-2 flex-shrink-0"><X size={14} /></button>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-4">
                 <button onClick={() => setShowEditModal(false)} className="flex-1 cursor-pointer px-6 py-3 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
-                <button onClick={handleUpdateResource} className="flex-1 cursor-pointer px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl shadow-lg shadow-green-600/30 hover:from-green-700 hover:to-emerald-700 transition-colors">Update Resource</button>
+                <button onClick={handleUpdateResource} disabled={resumeLoading} className="flex-1 cursor-pointer px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl shadow-lg shadow-green-600/30 hover:from-green-700 hover:to-emerald-700 transition-colors disabled:opacity-60">Update Resource</button>
               </div>
             </div>
           </div>

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import { Search, Filter, FileText, Calendar, DollarSign, CheckCircle, Clock, X, Edit2, Save } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -55,7 +57,7 @@ export function VendorContracts() {
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) return false;
       
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refreshToken })
@@ -125,7 +127,7 @@ export function VendorContracts() {
 
   const fetchContracts = async () => {
     try {
-      const response = await fetchWithAuth('/api/contracts/');
+      const response = await fetchWithAuth(`${API_BASE_URL}/contracts/`);
       if (response.ok) {
         const data = await response.json();
         setContracts(Array.isArray(data) ? data : []);
@@ -145,7 +147,7 @@ export function VendorContracts() {
 
   const handleStatusUpdate = async (contractId: number, status: string) => {
     try {
-      const response = await fetchWithAuth(`/api/contracts/${contractId}/status?status=${status}`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/contracts/${contractId}/status?status=${status}`, {
         method: 'PUT',
       });
       
@@ -190,7 +192,7 @@ export function VendorContracts() {
         description: editForm.description
       };
 
-      const response = await fetchWithAuth(`/api/contracts/${editingContract.id}`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/contracts/${editingContract.id}`, {
         method: 'PUT',
         body: JSON.stringify(updateData),
       });

@@ -6,6 +6,15 @@ from app.routers import auth, users, requirements, resources, contracts, billing
 
 Base.metadata.create_all(bind=engine)
 
+# Migrate resume_url column to TEXT to support base64 file storage
+try:
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE resources ALTER COLUMN resume_url TYPE TEXT"))
+        conn.commit()
+except Exception:
+    pass  # Already TEXT or table doesn't exist yet
+
 app = FastAPI(title="BenchAstra API", version="1.0.0", redirect_slashes=False)
 
 # Configure CORS - Allow all for development

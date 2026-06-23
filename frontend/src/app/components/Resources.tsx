@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import { Star, MessageSquare, Calendar, Download, Filter, Bookmark } from 'lucide-react';
 import { ResourceDetailModal } from './ResourceDetailModal';
 
@@ -24,7 +26,7 @@ export function Resources() {
       }
 
       try {
-        const response = await fetch('/api/resources/', {
+        const response = await fetch(`${API_BASE_URL}/resources/`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',

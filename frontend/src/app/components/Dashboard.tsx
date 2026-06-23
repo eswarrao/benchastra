@@ -4,6 +4,8 @@ import { Users, FileText, DollarSign, Clock, TrendingUp, TrendingDown, MapPin, B
 import { PostRequirement } from './PostRequirement';
 import { useToast } from '../contexts/ToastContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 interface DashboardProps {
   onViewMatches?: (jobId: string, matchCount: number) => void;
 }
@@ -34,7 +36,7 @@ export function Dashboard({ onViewMatches }: DashboardProps) {
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) return false;
 
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refreshToken })
@@ -106,7 +108,7 @@ export function Dashboard({ onViewMatches }: DashboardProps) {
   // Fetch dashboard stats from API
   const fetchStats = async () => {
     try {
-      const response = await fetchWithAuth('/api/dashboard/client/stats');
+      const response = await fetchWithAuth(`${API_BASE_URL}/dashboard/client/stats`);
 
       if (response.ok) {
         const data = await response.json();
@@ -124,7 +126,7 @@ export function Dashboard({ onViewMatches }: DashboardProps) {
 
   const fetchRequirements = async () => {
     try {
-      const url = '/api/requirements/?limit=10';
+      const url = `${API_BASE_URL}/requirements/?limit=10`;
       const response = await fetchWithAuth(url);
 
       if (response.ok) {
@@ -149,7 +151,7 @@ export function Dashboard({ onViewMatches }: DashboardProps) {
 
   const fetchUser = async () => {
     try {
-      const response = await fetchWithAuth('/api/users/me');
+      const response = await fetchWithAuth(`${API_BASE_URL}/users/me`);
       if (response.ok) {
         const userData = await response.json();
         setUserName(userData.full_name || userData.email?.split('@')[0] || 'User');
@@ -190,7 +192,7 @@ export function Dashboard({ onViewMatches }: DashboardProps) {
         return;
       }
 
-      let response = await fetch('/api/requirements/bulk-upload', {
+      let response = await fetch(`${API_BASE_URL}/requirements/bulk-upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -201,7 +203,7 @@ export function Dashboard({ onViewMatches }: DashboardProps) {
         const refreshed = await refreshToken();
         if (refreshed) {
           const newToken = getToken();
-          response = await fetch('/api/requirements/bulk-upload', {
+          response = await fetch(`${API_BASE_URL}/requirements/bulk-upload`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${newToken}` },
             body: formData

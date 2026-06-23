@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import { ArrowRight, ArrowLeft, CheckCircle2, X, Plus } from 'lucide-react';
 import { DatePicker } from './DatePicker';
 import React from 'react';
@@ -172,7 +174,7 @@ export function PostRequirement({ onClose }: PostRequirementProps) {
     const token = localStorage.getItem('token');
 
     try {
-      const response = await fetch('/api/requirements/', {
+      const response = await fetch(`${API_BASE_URL}/requirements/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -236,14 +238,14 @@ export function PostRequirement({ onClose }: PostRequirementProps) {
           </div>
 
           {/* Step Indicator - Reduced spacing */}
-          <div className="flex items-start justify-center gap-4">
+          <div className="flex items-start justify-center w-full px-4">
             {[
               { num: 1, label: 'Basic Info' },
               { num: 2, label: 'Skills' },
               { num: 3, label: 'Budget & Duration' }
             ].map(({ num, label }, index) => (
               <React.Fragment key={num}>
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center flex-shrink-0">
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-xs transition-all duration-300 ${num === step
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/40 scale-105'
@@ -267,7 +269,7 @@ export function PostRequirement({ onClose }: PostRequirementProps) {
 
                 {index < 2 && (
                   <div
-                    className={`w-12 h-0.5 mt-4 rounded-full transition-all duration-300 ${num < step
+                    className={`flex-1 h-0.5 mt-4 rounded-full transition-all duration-300 mx-2 ${num < step
                         ? 'bg-blue-600'
                         : 'bg-slate-200 dark:bg-slate-600'
                       }`}

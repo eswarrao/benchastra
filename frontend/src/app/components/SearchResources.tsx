@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import React from 'react'
 import { Search, SlidersHorizontal, MapPin, Calendar, DollarSign, Eye, X, FileSearch } from 'lucide-react';
 import { ResourceDetailModal } from './ResourceDetailModal';
@@ -38,7 +40,7 @@ export function SearchResources({ preFilteredJobId, preFilteredCount }: SearchRe
 
     setLoading(true);
     try {
-      let url = '/api/resources/?';
+      let url = `${API_BASE_URL}/resources/?`;
       const params: string[] = [];
 
       if (searchKeyword) {
@@ -118,7 +120,7 @@ export function SearchResources({ preFilteredJobId, preFilteredCount }: SearchRe
     // Find the requirement by its string ID to get the numeric ID
     try {
       // First get all requirements to find the one with matching requirement_id
-      const reqResponse = await fetch('/api/requirements/?limit=100', {
+      const reqResponse = await fetch(`${API_BASE_URL}/requirements/?limit=100`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -128,7 +130,7 @@ export function SearchResources({ preFilteredJobId, preFilteredCount }: SearchRe
 
         if (requirement) {
           // Use the numeric ID for the matches endpoint
-          const response = await fetch(`/api/requirements/${requirement.id}/matches`, {
+          const response = await fetch(`${API_BASE_URL}/requirements/${requirement.id}/matches`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
 

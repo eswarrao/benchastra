@@ -321,57 +321,36 @@ export default function App() {
   }, [isLoggedIn]);
 
   const handleLogin = async (email: string, password: string) => {
+    // LoginPage already called /auth/login and stored tokens — just read from localStorage
+    const role = localStorage.getItem('user_role');
+
     try {
-      // Use apiPost instead of fetch
-      const data = await apiPost('/auth/login', { email, password });
-
-      // Store tokens
-      localStorage.setItem('token', data.access_token);
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-
-      // Store the role from the response
-      if (data.role) {
-        localStorage.setItem('user_role', data.role);
-        sessionStorage.setItem('userRole', data.role);
-        sessionStorage.setItem('user', JSON.stringify({ email, role: data.role }));
-      }
-
-      // Get user info using apiGet
-      try {
-        const userData = await apiGet('/users/me');
-        setUserEmail(userData.email);
-        localStorage.setItem('user_email', userData.email);
-      } catch (err) {
-        console.error('Failed to get user info:', err);
-      }
-
-      // Update state
-      setIsLoggedIn(true);
-      setShowRoleSelection(true);
-      setAuthFlow('landing');
-
-      if (data.role) {
-        setUserRole(data.role);
-      }
-
-      // Replace history
-      const newState = {
-        isLoggedIn: true,
-        authFlow: 'landing',
-        activePage: 'dashboard',
-        currentVendorPage: 'dashboard',
-        userRole: data.role || null,
-        showRoleSelection: true
-      };
-      window.history.replaceState(newState, '', window.location.href);
-
-      return { success: true, role: data.role };
-    } catch (error: any) {
-      console.error('Login error:', error);
-      alert(error.message || 'Cannot reach server. Make sure the backend is running on port 8000.');
-      return { success: false };
+      const userData = await apiGet('/users/me');
+      setUserEmail(userData.email);
+      localStorage.setItem('user_email', userData.email);
+    } catch (err) {
+      console.error('Failed to get user info:', err);
     }
+
+    setIsLoggedIn(true);
+    setShowRoleSelection(true);
+    setAuthFlow('landing');
+
+    if (role) {
+      setUserRole(role as 'vendor' | 'client');
+    }
+
+    const newState = {
+      isLoggedIn: true,
+      authFlow: 'landing',
+      activePage: 'dashboard',
+      currentVendorPage: 'dashboard',
+      userRole: role || null,
+      showRoleSelection: true
+    };
+    window.history.replaceState(newState, '', window.location.href);
+
+    return { success: true, role: role || undefined };
   };
 
   // Update the token validation useEffect

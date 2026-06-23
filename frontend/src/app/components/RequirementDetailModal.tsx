@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import { X, Edit2, Save, MapPin, Briefcase, DollarSign, Clock, Users, Calendar } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 
@@ -51,7 +53,7 @@ const refreshToken = async (): Promise<boolean> => {
     const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) return false;
     
-    const response = await fetch('/api/auth/refresh', {
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken })
@@ -146,7 +148,7 @@ export function RequirementDetailModal({ requirement, onClose, mode = 'view', on
   useEffect(() => {
     const fetchRequirement = async () => {
       try {
-        const response = await fetchWithAuth(`/api/requirements/${requirement.id}`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/requirements/${requirement.id}`);
         
         if (response.ok) {
           const data = await response.json();
@@ -196,7 +198,7 @@ export function RequirementDetailModal({ requirement, onClose, mode = 'view', on
         status: formData.status,
       };
 
-      const response = await fetchWithAuth(`/api/requirements/${requirement.id}`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/requirements/${requirement.id}`, {
         method: 'PUT',
         body: JSON.stringify(updateData),
       });

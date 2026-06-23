@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import { Bell, CheckCheck, Trash2, X, Megaphone, GitMerge, FileText, Briefcase } from 'lucide-react';
 
 interface Notification {
@@ -47,7 +49,7 @@ export function NotificationPanel({ unreadCount, onCountChange }: NotificationPa
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/notifications/?limit=30', {
+      const res = await fetch(`${API_BASE_URL}/notifications/?limit=30`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -79,7 +81,7 @@ export function NotificationPanel({ unreadCount, onCountChange }: NotificationPa
   const markRead = async (id: number) => {
     const token = getToken();
     if (!token) return;
-    await fetch(`/api/notifications/${id}/read`, {
+    await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -92,7 +94,7 @@ export function NotificationPanel({ unreadCount, onCountChange }: NotificationPa
   const markAllRead = async () => {
     const token = getToken();
     if (!token) return;
-    await fetch('/api/notifications/read-all', {
+    await fetch(`${API_BASE_URL}/notifications/read-all`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -103,7 +105,7 @@ export function NotificationPanel({ unreadCount, onCountChange }: NotificationPa
   const deleteNotification = async (id: number) => {
     const token = getToken();
     if (!token) return;
-    await fetch(`/api/notifications/${id}`, {
+    await fetch(`${API_BASE_URL}/notifications/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });

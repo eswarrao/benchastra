@@ -1,4 +1,6 @@
 import { Check } from 'lucide-react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import { useState, useEffect } from 'react';
 
 export function Billing() {
@@ -9,7 +11,7 @@ export function Billing() {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const response = await fetch('/api/billing/plans');
+        const response = await fetch(`${API_BASE_URL}/billing/plans`);
         const data = await response.json();
         setPlans(data);
       } catch (error) {
@@ -26,7 +28,7 @@ export function Billing() {
     const fetchInvoices = async () => {
       try {
         const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-        const response = await fetch('/api/billing/invoices', {
+        const response = await fetch(`${API_BASE_URL}/billing/invoices`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -60,7 +62,7 @@ export function Billing() {
   const handleUpgrade = async (planName: string) => {
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-      const response = await fetch('/api/subscriptions/upgrade', {
+      const response = await fetch(`${API_BASE_URL}/subscriptions/upgrade`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

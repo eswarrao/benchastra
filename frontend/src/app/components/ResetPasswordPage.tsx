@@ -1,4 +1,6 @@
 import { useState } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 import React from 'react'
 import { Lock, ArrowRight, ArrowLeft } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
@@ -26,7 +28,7 @@ export function ResetPasswordPage({ onBackToLogin, onResetPassword }: ResetPassw
     }
     setError('');
     try {
-      const response = await fetch('/api/auth/reset-password', {
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

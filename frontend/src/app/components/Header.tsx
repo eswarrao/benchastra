@@ -1,8 +1,9 @@
-// components/Header.tsx - Updated with green theme for vendor role and fixed company data
+﻿// components/Header.tsx - Updated with green theme for vendor role and fixed company data
 import { useState, useEffect, useRef } from 'react';
 import React from 'react';
 import { ChevronDown, Settings, LogOut, Search, Menu, User, Mail, Phone, Building2, Camera, Trash2, X } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { apiGet, apiRequest } from '@/config/api';
 import { NotificationPanel } from './NotificationPanel';
 import { useToast } from '../contexts/ToastContext';
 
@@ -39,7 +40,7 @@ export function Header({
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) return false;
       
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refreshToken })
@@ -137,12 +138,9 @@ export function Header({
     }
 
     try {
-      const response = await fetchWithAuth('/api/users/me');
-      
-      if (response.ok) {
-        const userData = await response.json();
-        console.log('User data from API:', userData); // Debug log
-        
+      const userData = await apiGet('/users/me');
+
+      {
         let displayName = userData.full_name;
         if (!displayName || displayName === '') {
           displayName = userData.email ? userData.email.split('@')[0] : 'User';
@@ -166,14 +164,6 @@ export function Header({
         });
 
         setProfileImage(userData.profile_picture || null);
-      } else if (response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        setUser({ name: 'Guest', email: 'Please login again', phone: '', company: '', role: '', profile_picture: '' });
-      } else {
-        setError(true);
-        setUser({ name: 'Error', email: 'Failed to load', phone: '', company: '', role: '', profile_picture: '' });
       }
     } catch (err) {
       console.error('Failed to fetch user:', err);
@@ -187,15 +177,9 @@ export function Header({
   useEffect(() => {
     fetchUser();
 
-    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-    if (token) {
-      fetch('/api/notifications/?unread_only=true', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then(r => r.ok ? r.json() : [])
-        .then(data => setUnreadCount(Array.isArray(data) ? data.length : 0))
-        .catch(() => { });
-    }
+    apiGet('/notifications/?unread_only=true')
+      .then(data => setUnreadCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => { });
   }, []);
 
   const getInitials = () => {
@@ -251,8 +235,7 @@ export function Header({
       reader.onloadend = async () => {
         const imageData = reader.result as string;
 
-        const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-        const response = await fetchWithAuth('/api/users/me/profile-picture', {
+        const response = await apiRequest('/users/me/profile-picture', {
           method: 'PUT',
           body: JSON.stringify({ profile_picture: imageData }),
         });
@@ -279,9 +262,7 @@ export function Header({
     if (!confirm('Are you sure you want to remove your profile picture?')) return;
 
     try {
-      const response = await fetchWithAuth('/api/users/me/profile-picture', {
-        method: 'DELETE',
-      });
+      const response = await apiRequest('/users/me/profile-picture', { method: 'DELETE' });
 
       if (response.ok) {
         setProfileImage(null);
@@ -298,12 +279,9 @@ export function Header({
 
   const handleUpdateProfile = async () => {
     try {
-      const response = await fetchWithAuth('/api/users/me', {
+      const response = await apiRequest('/users/me', {
         method: 'PUT',
-        body: JSON.stringify({
-          full_name: editingUser.name,
-          phone: editingUser.phone,
-        }),
+        body: JSON.stringify({ full_name: editingUser.name, phone: editingUser.phone }),
       });
 
       if (response.ok) {
