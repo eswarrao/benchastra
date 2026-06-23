@@ -228,7 +228,10 @@ export function VendorResources() {
       isValid = false;
     }
 
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = 'Please enter a valid email';
       isValid = false;
     }
@@ -877,7 +880,7 @@ export function VendorResources() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Email</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Email <span className="text-red-500">*</span></label>
                 <input
                   type="email"
                   placeholder="Enter email"
@@ -1003,9 +1006,9 @@ export function VendorResources() {
               <div><div className="text-xs text-slate-500 mb-2">Skills</div><div className="flex flex-wrap gap-2">{selectedResource.skills?.map((skill, i) => (<span key={i} className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">{skill}</span>))}</div></div>
               <div><div className="text-xs text-slate-500 mb-2">Summary</div><p className="text-sm text-slate-600">{selectedResource.summary || 'No summary provided'}</p></div>
               <div><div className="text-xs text-slate-500 mb-1">Status</div><div className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${selectedResource.status === 'Available' ? 'bg-green-100 text-green-700' : selectedResource.status === 'Busy' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>{selectedResource.status}</div></div>
-              {selectedResource.resume_url && (
-                <div>
-                  <div className="text-xs text-slate-500 mb-1">Resume</div>
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Resume</div>
+                {selectedResource.resume_url ? (
                   <a
                     href={selectedResource.resume_url.split(';;')[0]}
                     download={selectedResource.resume_url.split(';;filename=')[1] || 'resume'}
@@ -1013,8 +1016,10 @@ export function VendorResources() {
                   >
                     <Download size={14} /> Download Resume
                   </a>
-                </div>
-              )}
+                ) : (
+                  <span className="text-sm text-slate-400 italic">Resume not attached</span>
+                )}
+              </div>
               <button onClick={() => setShowDetailsModal(false)} className="w-full cursor-pointer px-6 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">Close</button>
             </div>
           </div>
